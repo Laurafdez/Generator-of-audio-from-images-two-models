@@ -1,70 +1,94 @@
-# Getting Started with Create React App
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# Generator-of-audio-from-images
 
-## Available Scripts
+En este repositorio se encuentran registrado un pipeline que es capaz de generar audio cuando recibe como entrada una imagen. Para poder llevar a cabo este proceso se conectan dos modelos. 
 
-In the project directory, you can run:
+## Contractiva Captioner (CoCa)
 
-### `npm start`
+El primero es Contractiva Captioner (CoCa) es un modelo que dada una imagen es capaz de describir lo que ocurre en esa imagen. CoCa desarrolla su arquitectura siguiendo tres enfoques, primero usa el codificador de la imagen y el decodificador de texto para obtener las representaciones del texto unimodales, para ello, omite las primeras capas del decodificador. En el siguiente paso, se usan esas capas para obtener las representaciones multimodales de imagen y texto. Para entrenar CoCa se usa las pérdidas de constrante entre la salida del codificador de la imagen y el decodificador de texto unimodal, con lo que se consigue comparar las representaciones de imagen y de texto. También, se utilizan las pérdidas de generación de subtítulos en la salida del decodificador multimodal, que ayudan al modelo a predecir los tokens de texto de forma autorregresiva. Asimismo, esta forma de entrenamiento va a permitir que el modelo sea capaz de capturar tanto las características globales como regionales de las imágenes y de los textos. 
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+<div align="center">
+  <img src="public/assets/CoCa1.png" width="300" height="300" />
+</div>
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
 
-### `npm test`
+Los datos que utiliza el modelo para entrenar son de baja calidad tanto los textos como las imágenes, esto permite que el modelo aprenda las representaciones genéricas y estas puedan ser transferidas a diferentes tareas realizando pequeñas adaptaciones o transferencia de conocimientos.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
 
-### `npm run build`
+Coca es capaz de realizar una multitud de tareas: reconocimiento visual, generación de subtítulos de imágenes, comprensión multimodal, clasificar imágenes sin etiquetas, recuperar imágenes sin etiquetas... Adicionalmente, se ha demostrado que el modelo Contrastive Captioner (CoCa) supera a otros modelos gracias a que es capaz de realizar transferencia sin etiquetas.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## AudioLDM
+El segundo modelo que se utiliza es AudioLDM surge como un sistema Text-to-audio(TTA) que usa un espacio latente para aprender las representaciones de audio continuas a partir del preentrenamiento constractivo de lenguaje-audio(CLAP). El modelo CLAP permite entrenar el espacio latente con embeddings de audio condicionados por los embeddings de texto, lo que permite que AudioLDM genere audios de calidad con una gran eficiencia computacional. Es decir, AudioLDM aprende a generar un audio en una primera estancia en un espacio latente codificado por un VAE, se desarrolla ese espacio latente condicionado por embeddings de audio y de texto constractivo preentrenado por CLAP. Este hecho permite que CLAP pueda generar sonido sin usar pares de datos de lenguaje-audio para entrenar el LDM. En definitiva, el modelo AudioLDM es un modelo que combina el preentrenamiento constractivo de lenguaje-audio(CLAP) con modelos de difusión latentes condicionados con el objetivo de generar audio de alta calidad a partir de descripciones de texto. En la siguiente figura se muestra la arquitectura de AudioLDM, se observa como se obtiene la muestra de audio y la de texto y gracias a CLAP y como con el VAE se consigue codificar un espacio latente condicionado del que se obten las muestras de audio generados :
+<div align="center">
+  <img src="public/assets/audioldm1.jpg" width="350" height="350" />
+</div>
+## Pipeline
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+Una vez explicados los modelos utilizados, se pasa a explicar la implementación seguida en el desarrollo del pipeline capaz de generar audio cuando recibe una imagen como entrada. Primero de todo, se estudió la forma en la que estaba implementado CoCa y como se podía usar dentro del pipeline. Se descubrió que en Huggingface está subido el código para poder usar CoCa. Este código lo que hace principalmente es tomar la imagen y generar una descripción para esa imagen. Se hizo el mismo proceso de búsqueda para el modelo AudioLDM, también se encontró una pequeño pipeline que es capaz de generar audio a partir de un texto. Con todo ello, se juntaron ambos modelos, se usó la descripción de la salida del primer modelo como entrada del segundo. El pipeline presenta la siguiente forma:
+<div align="center">
+  <img src="public/assets/pipeline.py.png"  height="150"  />
+</div>
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Una vez implementado, se crea una página Web para poner en funcionamiento dicho pipeline, en el que el usuario escribe la url de la imagen que quiere poner sonido y el generador de audio sonarizara dicha imagen.
 
-### `npm run eject`
+<div align="center">
+  <img src="public/assets/pipeline2.png" width="400" height="400" />
+</div>
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+## Puesta en funcionamiento
+1. Se clona el repositorio y se navega hasta donde esta el código:
+   ```console
+      git clone https://github.com/Laurafdez/Generator-of-audio-from-images.git
+      ```
+2. Se navega hasta donde esta el código:
+   ```console
+     cd /Generator-of-audio-from-images/src
+      ```
+       
+2. Crea un entorno donde poner en funcionamiento el pipeline:
+   ```console
+     conda create --name pipeline
+     ```
+3. Se activa el entorno creado:
+   ```console
+     conda activate pipeline
+     ```
+4. Se instalan lsa dependecias del entorno:
+   ```console
+     pip install Flask open-clip torch Pillow diffusers torchvision scipy flask-cors requests soundfile numpy
+     ```
+5. Una vez instaladas todas las dependecias se procede a poner en funcionamiento el script pipeline.py
+    ```console
+       python pipeline.py
+   ```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+6. En otro terminal se crea otro entorno donde se ejecuta la aplicación de node:
+    ```console
+       conda create --name node_js
+   ```
+7. Se activa el entorno creado:
+    ```console
+       conda activate node_js
+   ```
+8.  Se instala node en el entorno:
+    ```console
+       conda install -c conda-forge nodejs
+    ```
+9.  Se mueve a donde esta el codigo:
+    ```console
+       cd src
+    ```
+10. Se instalan las dependecias:
+    ```console
+       npm install
+    ```
+11. Se corre la aplicación:
+    ```console
+       npm start
+    ```
+12. Ya esta la página Web corriendo y se pueden introducir la URL de las imágenes.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+## References
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+1. Yu, J., Wang, Z., Vasudevan, V., Yeung, L., Seyedhosseini, M., & Wu, Y. (2022). Coca: Contrastive captioners are image-text foundation models. arXiv preprint arXiv:2205.01917.
+2. Liu, H., Chen, Z., Yuan, Y., Mei, X., Liu, X., Mandic, D., ... & Plumbley, M. D. (2023). Audioldm: Text-to-audio generation with latent diffusion models. arXiv preprint arXiv:2301.12503.
