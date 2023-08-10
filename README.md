@@ -40,7 +40,7 @@ Once implemented, a web page is created to run the pipeline, in which the user t
   <img src="public/assets/pipeline2.png" width="400" height="400" />
 </div>
 
-## Puesta en funcionamiento
+## Steps to follow
 1. Clone the repository and navigate to where the code is:
    ```console
       git clone https://github.com/Laurafdez/Generator-of-audio-from-images.git
