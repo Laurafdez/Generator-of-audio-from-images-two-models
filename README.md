@@ -71,15 +71,18 @@ Once implemented, a web page is created to run the pipeline, in which the user t
     ```console
        conda create --name node_js
    ```
-7.The created environment is activated:
+7. The created environment is activated:
+
     ```console
        conda activate node_js
    ```
 8.  Node is installed in the environment:
+
     ```console
        conda install -c conda-forge nodejs
     ```
 9.  Moves to where the code is:
+
     ```console
        cd src
     ```
