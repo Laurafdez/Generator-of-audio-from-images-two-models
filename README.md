@@ -24,6 +24,7 @@ The second model used is AudioLDM emerges as a Text-to-Audio (TTA) system that u
 <div align="center">
   <img src="public/assets/audioldm1.jpg" width="350" height="350" />
 </div>
+
 ## Pipeline
 
 Once the models used have been explained, the implementation followed in the development of the pipeline capable of generating audio when it receives an image as input. First of all, we studied how CoCa was implemented and how it could be used within the pipeline. It was discovered that in Huggingface is uploaded the code to be able to use CoCa. This code mainly takes the image and generates a description for that image. The same search process was done for the AudioLDM model, also a small pipeline was found that is able to generate audio from text. With all this, both models were put together, the output description of the first model was used as input for the second model. The pipeline has the following form:
