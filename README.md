@@ -1,92 +1,96 @@
 
 # Generator-of-audio-from-images
 
-En este repositorio se encuentran registrado un pipeline que es capaz de generar audio cuando recibe como entrada una imagen. Para poder llevar a cabo este proceso se conectan dos modelos. 
+In this repository a pipeline is registered that is able to generate audio when it receives an image as input. In order to carry out this process, two models are connected.  
 
 ## Contractiva Captioner (CoCa)
 
-El primero es Contractiva Captioner (CoCa) es un modelo que dada una imagen es capaz de describir lo que ocurre en esa imagen. CoCa desarrolla su arquitectura siguiendo tres enfoques, primero usa el codificador de la imagen y el decodificador de texto para obtener las representaciones del texto unimodales, para ello, omite las primeras capas del decodificador. En el siguiente paso, se usan esas capas para obtener las representaciones multimodales de imagen y texto. Para entrenar CoCa se usa las pérdidas de constrante entre la salida del codificador de la imagen y el decodificador de texto unimodal, con lo que se consigue comparar las representaciones de imagen y de texto. También, se utilizan las pérdidas de generación de subtítulos en la salida del decodificador multimodal, que ayudan al modelo a predecir los tokens de texto de forma autorregresiva. Asimismo, esta forma de entrenamiento va a permitir que el modelo sea capaz de capturar tanto las características globales como regionales de las imágenes y de los textos. 
+The first one is Contractive Captioner (CoCa) is a model that given an image is able to describe what happens in that image. CoCa develops its architecture following two approaches, first it uses the image encoder and the text decoder to obtain the unimodal text representations by omitting the first layers of the decoder. In the next step, these layers are used to obtain the multimodal image and text representations. To train CoCa, the constrant losses between the output of the image encoder and the unimodal text decoder are used to compare the image and text representations. Also, the subtitle generation losses in the output of the multimodal decoder are used, which help the model to predict the text tokens in an autoregressive way. Furthermore, this form of training will allow the model to be able to capture both global and regional characteristics of images and texts. 
+
+
 
 <div align="center">
   <img src="public/assets/CoCa1.png" width="300" height="300" />
 </div>
 
 
-Los datos que utiliza el modelo para entrenar son de baja calidad tanto los textos como las imágenes, esto permite que el modelo aprenda las representaciones genéricas y estas puedan ser transferidas a diferentes tareas realizando pequeñas adaptaciones o transferencia de conocimientos.
+The data that the model uses for training is of low quality, both text and images, which allows the model to learn generic representations and these can be transferred to different tasks by making small adaptations or knowledge transfer.
 
 
-Coca es capaz de realizar una multitud de tareas: reconocimiento visual, generación de subtítulos de imágenes, comprensión multimodal, clasificar imágenes sin etiquetas, recuperar imágenes sin etiquetas... Adicionalmente, se ha demostrado que el modelo Contrastive Captioner (CoCa) supera a otros modelos gracias a que es capaz de realizar transferencia sin etiquetas.
+Coca is able to perform a multitude of tasks: visual recognition, image caption generation, multimodal understanding, label-free image classification, label-free image retrieval... Additionally, the Contrastive Captioner (CoCa) model has been shown to outperform other models by being able to perform label-free transfer.
 
 ## AudioLDM
-El segundo modelo que se utiliza es AudioLDM surge como un sistema Text-to-audio(TTA) que usa un espacio latente para aprender las representaciones de audio continuas a partir del preentrenamiento constractivo de lenguaje-audio(CLAP). El modelo CLAP permite entrenar el espacio latente con embeddings de audio condicionados por los embeddings de texto, lo que permite que AudioLDM genere audios de calidad con una gran eficiencia computacional. Es decir, AudioLDM aprende a generar un audio en una primera estancia en un espacio latente codificado por un VAE, se desarrolla ese espacio latente condicionado por embeddings de audio y de texto constractivo preentrenado por CLAP. Este hecho permite que CLAP pueda generar sonido sin usar pares de datos de lenguaje-audio para entrenar el LDM. En definitiva, el modelo AudioLDM es un modelo que combina el preentrenamiento constractivo de lenguaje-audio(CLAP) con modelos de difusión latentes condicionados con el objetivo de generar audio de alta calidad a partir de descripciones de texto. En la siguiente figura se muestra la arquitectura de AudioLDM, se observa como se obtiene la muestra de audio y la de texto y gracias a CLAP y como con el VAE se consigue codificar un espacio latente condicionado del que se obten las muestras de audio generados :
+The second model used is AudioLDM emerges as a Text-to-Audio (TTA) system that uses a latent space to learn continuous audio representations from constrained language-to-audio pre-training (CLAP). The CLAP model allows training the latent space with audio embeddings conditioned by text embeddings, which enables AudioLDM to generate quality audio with high computational efficiency. That is, AudioLDM learns to generate an audio in a first stay in a latent space encoded by a VAE, develops that latent space conditioned by audio embeddings and constraining text embeddings pre-trained by CLAP. This fact allows CLAP to generate sound without using language-audio data pairs to train the LDM. In short, the AudioLDM model is a model that combines constractive language-to-audio pre-training (CLAP) with conditional latent diffusion models with the aim of generating high quality audio from text descriptions. The following figure shows the AudioLDM architecture, showing how the audio and text samples are obtained thanks to CLAP and how the VAE is used to encode a conditioned latent space from which the generated audio samples are obtained:
 <div align="center">
   <img src="public/assets/audioldm1.jpg" width="350" height="350" />
 </div>
 ## Pipeline
 
-Una vez explicados los modelos utilizados, se pasa a explicar la implementación seguida en el desarrollo del pipeline capaz de generar audio cuando recibe una imagen como entrada. Primero de todo, se estudió la forma en la que estaba implementado CoCa y como se podía usar dentro del pipeline. Se descubrió que en Huggingface está subido el código para poder usar CoCa. Este código lo que hace principalmente es tomar la imagen y generar una descripción para esa imagen. Se hizo el mismo proceso de búsqueda para el modelo AudioLDM, también se encontró una pequeño pipeline que es capaz de generar audio a partir de un texto. Con todo ello, se juntaron ambos modelos, se usó la descripción de la salida del primer modelo como entrada del segundo. El pipeline presenta la siguiente forma:
+Once the models used have been explained, the implementation followed in the development of the pipeline capable of generating audio when it receives an image as input. First of all, we studied how CoCa was implemented and how it could be used within the pipeline. It was discovered that in Huggingface is uploaded the code to be able to use CoCa. This code mainly takes the image and generates a description for that image. The same search process was done for the AudioLDM model, also a small pipeline was found that is able to generate audio from text. With all this, both models were put together, the output description of the first model was used as input for the second model. The pipeline has the following form:
+
 <div align="center">
   <img src="public/assets/pipeline.py.png"  height="150"  />
 </div>
 
-Una vez implementado, se crea una página Web para poner en funcionamiento dicho pipeline, en el que el usuario escribe la url de la imagen que quiere poner sonido y el generador de audio sonarizara dicha imagen.
+Once implemented, a web page is created to run the pipeline, in which the user types the url of the image to be sounded and the audio generator will sonarise the image.
+
 
 <div align="center">
   <img src="public/assets/pipeline2.png" width="400" height="400" />
 </div>
 
 ## Puesta en funcionamiento
-1. Se clona el repositorio y se navega hasta donde esta el código:
+1. Clone the repository and navigate to where the code is:
    ```console
       git clone https://github.com/Laurafdez/Generator-of-audio-from-images.git
       ```
-2. Se navega hasta donde esta el código:
+2. Navigate to where the code is:
    ```console
      cd /Generator-of-audio-from-images/src
       ```
        
-2. Crea un entorno donde poner en funcionamiento el pipeline:
+2. Create an environment in which to put the pipeline to work:
    ```console
      conda create --name pipeline
      ```
-3. Se activa el entorno creado:
+3. The created environment is activated:
    ```console
      conda activate pipeline
      ```
-4. Se instalan lsa dependecias del entorno:
+4. Environmental dependencies are installed
    ```console
      pip install Flask open-clip torch Pillow diffusers torchvision scipy flask-cors requests soundfile numpy
      ```
-5. Una vez instaladas todas las dependecias se procede a poner en funcionamiento el script pipeline.py
+5. Once all the dependencies have been installed, the pipeline.py script is put into operation.
     ```console
        python pipeline.py
    ```
 
-6. En otro terminal se crea otro entorno donde se ejecuta la aplicación de node:
+6. On another terminal, another environment is created where the node application is run:
     ```console
        conda create --name node_js
    ```
-7. Se activa el entorno creado:
+7.The created environment is activated:
     ```console
        conda activate node_js
    ```
-8.  Se instala node en el entorno:
+8.  Node is installed in the environment:
     ```console
        conda install -c conda-forge nodejs
     ```
-9.  Se mueve a donde esta el codigo:
+9.  Moves to where the code is:
     ```console
        cd src
     ```
-10. Se instalan las dependecias:
+10. Dependencies are installed:
     ```console
        npm install
     ```
-11. Se corre la aplicación:
+11. The application is run:
     ```console
        npm start
     ```
-12. Ya esta la página Web corriendo y se pueden introducir la URL de las imágenes.
+12. The website is up and running and you can enter the URL of the images..
 
 ## References
 
