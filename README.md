@@ -60,7 +60,7 @@ Once implemented, a web page is created to run the pipeline, in which the user t
      ```
 4. Environmental dependencies are installed
    ```console
-     pip install Flask open-clip torch Pillow diffusers torchvision scipy flask-cors requests soundfile numpy
+     pip install Flask open_clip_torch torch Pillow diffusers torchvision scipy flask-cors requests soundfile numpy
      ```
 5. Once all the dependencies have been installed, the pipeline.py script is put into operation.
     ```console
